@@ -39,6 +39,8 @@ const threadFile = path.resolve(__dirname, 'mythread.js');
 ``` javascript
 const {parentPort} = require('worker_threads');
 
+// for every worker this is a new instance 
+// so this 'counter' starts everytime with zero.
 let counter = 0;
 
 // the code to execute: 
