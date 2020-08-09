@@ -24,7 +24,7 @@ const threadFile = path.resolve(__dirname, 'mythread.js');
         p.exec(`foo(${i})`).promise.then(r => console.log('xxx', r))
     }
 
-    // wait until all jobs done
+    // wait until all jobs are done
     await p.finished();
     console.log('DONE')
 
@@ -32,11 +32,9 @@ const threadFile = path.resolve(__dirname, 'mythread.js');
     await p.destroy();
     console.log('Destroyed')
 })();
-
-
 ```
 
-### Worker Code
+### Worker Code (mythread.js)
 
 ``` javascript
 const {parentPort} = require('worker_threads');
@@ -45,7 +43,7 @@ let counter = 0;
 
 // the code to execute: 
 // - wait a little bit and then return result
-// - on every 5th execution fail with exception 
+// - on every 5th execution fail 
 async function toExec(msg) {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
