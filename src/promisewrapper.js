@@ -1,25 +1,25 @@
 class PromiseWrapper {
-    _promise;
-    _resolve;
-    _reject;
+    promise_;
+    resolve_;
+    reject_;
 
     constructor() {
-        this._promise = new Promise((resolve, reject) => {
-            this._resolve = resolve;
-            this._reject = reject;
+        this.promise_ = new Promise((resolve, reject) => {
+            this.resolve_ = resolve;
+            this.reject_ = reject;
         })
     }
 
     get promise() {
-        return this._promise
+        return this.promise_
     }
 
     get resolve() {
-        return this._resolve
+        return this.resolve_
     }
 
     get reject() {
-        return this._reject
+        return this.reject_
     }
 }
 

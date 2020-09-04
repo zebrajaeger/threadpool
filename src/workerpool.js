@@ -5,29 +5,30 @@ const {StaticWorkerThread} = require('./workerthread')
 const {Job} = require('./job')
 
 class AbstractWorkerPool extends EventEmitter {
-    _workers = [];
-    _queue = [];
-    _threadCount;
+    workers_ = [];
+    queue_ = [];
+    threadCount_;
 
     constructor(threadCount = os.cpus().length) {
         super();
-        this._threadCount = threadCount;
+        this.threadCount_ = threadCount;
     }
 
     begin() {
-        this._workers = this.createWorkers(this._threadCount);
+        this.workers_ = this.createWorkers_(this.threadCount_);
+        this.emit('worker', this.status);
         return this;
     }
 
-    createWorkers(threadCount) {
+    createWorkers_(threadCount) {
         throw new Error('AbstractWorkerPool is abstract');
     }
 
     exec(data) {
         //console.log('Exec job',data)
         const job = new Job(data);
-        this._queue.push(job);
-        this._dispatchWork();
+        this.queue_.push(job);
+        this.dispatchWork_();
         return job;
     }
 
@@ -42,38 +43,50 @@ class AbstractWorkerPool extends EventEmitter {
     }
 
     async destroy() {
-        return Promise.all(this._workers.map(worker => worker.destroy()));
+        return Promise.all(this.workers_.map(worker => worker.destroy()));
     }
 
     get pendingJobs() {
-        return this._queue.length
+        return this.queue_.length
     }
 
     get workerCount() {
-        return this._workers.length;
+        return this.workers_.length;
     }
 
     get workingWorkers() {
-        return this._workers.filter(worker => worker.isWorking).length
+        return this.workers_.filter(worker => worker.isWorking).length
     }
 
     get idleWorkers() {
-        return this._workers.filter(worker => !worker.isWorking).length
+        return this.workers_.filter(worker => !worker.isWorking).length
     }
 
-    _workerReady() {
-        this._dispatchWork();
-        if (this.workingWorkers === 0) {
+    get status() {
+        return {
+            workers: this.workerCount,
+            idle: this.idleWorkers,
+            working: this.workingWorkers,
+            pendingJobs: this.pendingJobs,
+        }
+    }
+
+    workerReady_() {
+        this.dispatchWork_();
+        const status = this.status;
+        this.emit('worker', status);
+        if (status.working === 0) {
             this.emit('idle');
         }
     }
 
-    _dispatchWork() {
+    dispatchWork_() {
         let queueEmpty = false;
-        this._workers
+        this.workers_
             .filter(worker => !worker.isWorking)
             .forEach(worker => {
-                let job = this._queue.shift();
+                let job = this.queue_.shift();
+                //console.log(job)
                 if (job) {
                     //console.log(`Start Job '${job.data}'`, )
                     worker.execJob(job);
@@ -88,18 +101,18 @@ class AbstractWorkerPool extends EventEmitter {
 }
 
 class StaticWorkerPool extends AbstractWorkerPool {
-    _codePath;
+    codePath_;
 
     constructor(codePath) {
         super();
-        this._codePath = codePath;
+        this.codePath_ = codePath;
     }
 
-    createWorkers(threadCount) {
+    createWorkers_(threadCount) {
         const result = [];
         for (let i = 0; i < threadCount; ++i) {
-            let workerThread = new StaticWorkerThread(this._codePath);
-            workerThread.on('ready', () => this._workerReady())
+            let workerThread = new StaticWorkerThread(this.codePath_);
+            workerThread.on('ready', () => this.workerReady_())
             result.push(workerThread);
         }
         return result;

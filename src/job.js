@@ -1,31 +1,31 @@
 const {PromiseWrapper} = require('./promisewrapper')
 
 class Job {
-    _promiseWrapper = new PromiseWrapper();
-    _data;
+    promiseWrapper_ = new PromiseWrapper();
+    data_;
 
     constructor(data) {
-        this._data = data;
+        this.data_ = data;
     }
 
     get data() {
-        return this._data
+        return this.data_;
     }
 
     get promiseWrapper() {
-        return this._promiseWrapper
+        return this.promiseWrapper_
     }
 
     get promise() {
-        return this._promiseWrapper.promise
+        return this.promiseWrapper_.promise
     }
 
     get reject() {
-        return this._promiseWrapper.reject
+        return this.promiseWrapper_.reject
     }
 
     get resolve() {
-        return this._promiseWrapper.resolve
+        return this.promiseWrapper_.resolve
     }
 }
 

@@ -2,17 +2,17 @@ const EventEmitter = require('events');
 const {Worker} = require('worker_threads');
 
 class AbstractWorkerThread extends EventEmitter {
-    _isWorking = false;
-    _worker = null;
+    isWorking_ = false;
+    worker = null;
 
-    _job = null;
+    job = null;
 
     constructor() {
         super();
     }
 
     get isWorking() {
-        return this._isWorking
+        return this.isWorking_
     }
 
     execJob(job) {
@@ -22,19 +22,19 @@ class AbstractWorkerThread extends EventEmitter {
             throw new Error(' Worker is already working');
         }
 
-        if (!this._worker) {
-            this._worker = this.createWorker();
+        if (!this.worker_) {
+            this.worker_ = this.createWorker();
         }
 
-        this._job = job;
+        this.job_ = job;
 
-        this._isWorking = true;
-        this._worker.postMessage(job.data);
+        this.isWorking_ = true;
+        this.worker_.postMessage(job.data);
     }
 
     async destroy() {
-        return (this._worker)
-            ? this._worker.terminate()
+        return (this.worker_)
+            ? this.worker_.terminate()
             : null;
     }
 
@@ -43,15 +43,15 @@ class AbstractWorkerThread extends EventEmitter {
     };
 
     threadOnMessage(msg) {
-        this._job.resolve(msg);
-        this._isWorking = false;
+        this.job_.resolve(msg);
+        this.isWorking_ = false;
         this.emit('ready');
     }
 
     threadOnError(err) {
-        this._job.reject(err);
-        this._isWorking = false;
-        this._worker = null; // worker is dead
+        this.job_.reject(err);
+        this.isWorking_ = false;
+        this.worker_ = null; // worker is dead
         this.emit('ready');
     }
 
@@ -62,15 +62,15 @@ class AbstractWorkerThread extends EventEmitter {
 }
 
 class StaticWorkerThread extends AbstractWorkerThread {
-    _codePath;
+    codePath_;
 
     constructor(filePath) {
         super();
-        this._codePath = filePath;
+        this.codePath_ = filePath;
     }
 
     createWorker() {
-        const result = new Worker(this._codePath);
+        const result = new Worker(this.codePath_);
         result.on('message', msg => this.threadOnMessage(msg));
         result.on('error', err => this.threadOnError(err));
         result.on('exit', statusCode => this.threadOnExit(statusCode));
@@ -78,4 +78,4 @@ class StaticWorkerThread extends AbstractWorkerThread {
     }
 }
 
-module.exports = {AbstractWorkerThread,StaticWorkerThread};
+module.exports = {AbstractWorkerThread, StaticWorkerThread};
